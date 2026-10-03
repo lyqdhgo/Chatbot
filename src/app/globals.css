@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------ */
+/* 全局基础样式                                                        */
+/* ------------------------------------------------------------------ */
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-slate-50 text-slate-800 antialiased;
+}
+
+/* 细滚动条，避免在聊天区里显得笨重 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-slate-300;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-400;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ------------------------------------------------------------------ */
+/* Markdown 正文样式                                                   */
+/* 没有引入 typography 插件，这里手写一套精简的排版规则              */
+/* ------------------------------------------------------------------ */
+
+.md-body {
+  @apply text-[15px] leading-relaxed;
+}
+
+.md-body > *:first-child {
+  margin-top: 0;
+}
+
+.md-body > *:last-child {
+  margin-bottom: 0;
+}
+
+.md-body p {
+  @apply my-2;
+}
+
+.md-body h1,
+.md-body h2,
+.md-body h3,
+.md-body h4 {
+  @apply mb-2 mt-4 font-semibold text-slate-900;
+}
+
+.md-body h1 {
+  @apply text-lg;
+}
+.md-body h2 {
+  @apply text-base;
+}
+.md-body h3 {
+  @apply text-[15px];
+}
+
+.md-body ul {
+  @apply my-2 list-disc space-y-1 pl-5;
+}
+
+.md-body ol {
+  @apply my-2 list-decimal space-y-1 pl-5;
+}
+
+.md-body li > p {
+  @apply my-0;
+}
+
+.md-body a {
+  @apply text-brand-600 underline underline-offset-2;
+}
+
+.md-body strong {
+  @apply font-semibold text-slate-900;
+}
+
+.md-body blockquote {
+  @apply my-2 border-l-4 border-slate-200 pl-3 text-slate-500;
+}
+
+/* 行内代码 */
+.md-body code:not(pre code) {
+  @apply rounded bg-slate-100 px-1.5 py-0.5 text-[13px] text-rose-600;
+}
+
+/* 代码块：配色由 highlight.js 主题提供，这里只管容器 */
+.md-body pre {
+  @apply my-3 overflow-x-auto rounded-lg bg-slate-900 p-3 text-[13px] leading-relaxed;
+}
+
+.md-body pre code {
+  @apply bg-transparent p-0 text-slate-100;
+}
+
+/* 表格 */
+.md-body table {
+  @apply my-3 w-full border-collapse overflow-hidden rounded-lg text-sm;
+}
+
+.md-body th,
+.md-body td {
+  @apply border border-slate-200 px-3 py-1.5 text-left;
+}
+
+.md-body th {
+  @apply bg-slate-50 font-semibold;
+}
+
+.md-body hr {
+  @apply my-4 border-slate-200;
+}
+
+/* 打字机光标 */
+.typing-cursor::after {
+  content: '▍';
+  @apply ml-0.5 inline-block animate-blink text-brand-500;
+}
