@@ -1,8 +1,44 @@
-# 云雀 AI 助理 · 智能聊天客服
+<div align="center">
+
+# 🐦 云雀 AI 助理 · 智能聊天客服
+
+**一个可以本地直接跑起来的智能客服 Web 应用**
+
+[![Next.js](https://img.shields.io/badge/Next.js%2014-000000?style=flat-square&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![RAG](https://img.shields.io/badge/RAG-本地知识库-8B5CF6?style=flat-square)](#如何替换成自己的知识库)
+[![LLM](https://img.shields.io/badge/LLM-DeepSeek%20%7C%20OpenAI%20%7C%20Qwen-4D6BFE?style=flat-square)](#如何切换模型厂商)
+[![无数据库](https://img.shields.io/badge/存储-本地文件%20·%20无需数据库-22C55E?style=flat-square)](#目录结构)
+
+[快速开始](#快速开始) · [四条核心路径](#四条核心路径) · [替换自己的知识库](#如何替换成自己的知识库) · [切换模型厂商](#如何切换模型厂商) · [目录结构](#目录结构) · [常见问题](#常见问题)
+
+</div>
+
+---
 
 一个可以本地直接跑起来的智能客服 Web 应用：**Next.js 14 + TypeScript + Tailwind CSS**，
 大模型走 **OpenAI 兼容接口**（默认 DeepSeek），带**本地知识库 RAG 检索**、**多轮上下文**、
 **未命中自动转人工**和**未答问题收集**。不需要任何数据库和云服务，所有数据都落在本地文件里。
+
+### 一次提问发生了什么
+
+```mermaid
+flowchart LR
+    A([用户提问]) --> B{知识库检索<br/>余弦相似度 Top-K}
+    B -- 命中 --> C[召回知识片段]
+    B -- 未命中 --> D[模型兜底话术]
+    D --> E[推送结构化 handoff 事件]
+    E --> F[转人工卡片]
+    C --> G[拼接多轮上下文<br/>+ 客服人格提示词]
+    G --> H[SSE 流式调用模型]
+    H --> I([回复 + 可展开引用来源])
+    H -.👍 / 👎.-> J[(feedback.jsonl)]
+    E -.记录未答问题.-> K[(unanswered.jsonl)]
+    F -.姓名 / 手机号只留在浏览器.-> L[(localStorage)]
+```
+
+> 转人工卡片里的**姓名和手机号只写入浏览器 localStorage**，没有任何后端接口接收它们。
 
 ---
 
