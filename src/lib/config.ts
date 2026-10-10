@@ -97,8 +97,9 @@ export function getRagConfig() {
   return {
     /** 召回片段数 */
     topK: envInt('RAG_TOP_K', 3),
-    /** 余弦相似度阈值，低于该值视为未命中 */
-    scoreThreshold: envFloat('RAG_SCORE_THRESHOLD', 0.18),
+    /** 余弦相似度阈值，低于该值视为未命中。0.15 是实测校准值：自带知识库上
+     *  真实问题落在 0.164~0.420，无关问题落在 0.043~0.116，取两者之间。 */
+    scoreThreshold: envFloat('RAG_SCORE_THRESHOLD', 0.15),
     /** 切片大小（字符） */
     chunkSize: envInt('CHUNK_SIZE', 300),
     /** 切片重叠（字符） */
