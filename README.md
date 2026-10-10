@@ -11,6 +11,7 @@
 [![LLM](https://img.shields.io/badge/LLM-DeepSeek%20%7C%20OpenAI%20%7C%20Qwen-4D6BFE?style=flat-square)](#如何切换模型厂商)
 [![无数据库](https://img.shields.io/badge/存储-本地文件%20·%20无需数据库-22C55E?style=flat-square)](#目录结构)
 [![License: MIT](https://img.shields.io/badge/License-MIT-3DA639?style=flat-square)](./LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/lyqdhgo/Chatbot/ci.yml?style=flat-square&label=CI)](https://github.com/lyqdhgo/Chatbot/actions/workflows/ci.yml)
 
 [快速开始](#快速开始) · [四条核心路径](#四条核心路径) · [替换自己的知识库](#如何替换成自己的知识库) · [切换模型厂商](#如何切换模型厂商) · [目录结构](#目录结构) · [常见问题](#常见问题)
 

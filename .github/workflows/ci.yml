@@ -1,0 +1,123 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Superseded pull-request runs are wasted work; superseded runs on main are
+  # history, and a cancelled run there reads as a failure to anyone watching.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  # Every `resolved` URL in the committed lockfile points at
+  # registry.npmmirror.com. npm's default `replace-registry-host: npmjs` only
+  # rewrites hosts that already say npmjs, so without `always` a runner outside
+  # China would still be fetching from the mirror. This redirects the fetches
+  # without touching the lockfile; the integrity hashes still verify.
+  npm_config_registry: https://registry.npmjs.org
+  npm_config_replace_registry_host: always
+
+  # `src/lib/config.ts:47` defaults to the real `deepseek` provider. Mock is what
+  # makes the end-to-end selftest reachable with no API key: it short-circuits
+  # the model call before any HTTP, and the embedding path defaults to the pure
+  # JavaScript TF-IDF implementation.
+  MODEL_PROVIDER: mock
+
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  build_and_e2e:
+    name: build-and-e2e
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # Works only because `.eslintrc.json` now exists. Without a config,
+      # `next lint` falls into its first-time-setup path and asks an interactive
+      # question; with no terminal to ask, it exits 1 instead of linting.
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      # After the build, not before: `next-env.d.ts` is gitignored, so a clean
+      # checkout does not have it and a bare `tsc --noEmit` fails on the types it
+      # references. `next build` generates it.
+      - name: Type-check
+        run: npm run typecheck
+
+      # Run the server binary directly rather than through `npm run start`: npm's
+      # pid is a wrapper, not the process holding the port, so killing it leaves
+      # the server orphaned and the step ends while the job still has a child.
+      #
+      # `nohup` and the stdin redirect are belt and braces. Each step is its own
+      # shell, and this one exits immediately after backgrounding the server; the
+      # server has to outlive it for the next three steps to have anything to
+      # talk to.
+      - name: Start the production server
+        run: |
+          nohup node node_modules/next/dist/bin/next start -p 3000 \
+            < /dev/null > server.log 2>&1 &
+          echo $! > server.pid
+
+      - name: Wait for /api/health
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:3000/api/health > /dev/null; then
+              echo "server ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::server did not become ready within 60s"
+          tail -n 100 server.log
+          exit 1
+
+      # The point of the job. Twelve assertions over the chat path: knowledge-base
+      # hit, multi-turn context, handoff on a miss, and the sensitive-word filter.
+      # The mock streams with a deliberate delay, so this takes tens of seconds
+      # rather than hanging.
+      - name: End-to-end selftest
+        run: timeout 240 node scripts/selftest.mjs
+
+      - name: Server log
+        if: always()
+        run: tail -n 200 server.log || true
+
+      - name: Stop the server
+        if: always()
+        run: |
+          if [ -f server.pid ]; then kill "$(cat server.pid)" 2>/dev/null || true; fi
+
+  # One required status check, so branch protection does not have to be updated
+  # every time the job list changes.
+  ci_ok:
+    name: ci-ok
+    needs: [build_and_e2e]
+    # Without `always()` a failed dependency makes this job `skipped`, and a
+    # skipped required check does not report success - the pull request just
+    # hangs with no red X explaining why.
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Verify every job succeeded
+        run: |
+          echo "build_and_e2e: ${{ needs.build_and_e2e.result }}"
+          test "${{ needs.build_and_e2e.result }}" = "success"
